@@ -1,12 +1,12 @@
 swagger: "2.0"
 info:
   version: "0.0.1"
-  title: User  App
+  title: MMDB (MyMovieDataBase)  App
 # during dev, should point to your local machine
-host: localhost:10010
-# basePath prefixes all resource paths 
+host: localhost:8080
+# basePath prefixes all resource paths
 basePath: /
-# 
+#
 schemes:
   # tip: remove http to make production-grade
   - http
@@ -36,7 +36,7 @@ paths:
           description: Success
           schema:
             # a pointer to a definition
-            $ref: "#/definitions/UsersResponse"
+            $ref: "#/definitions/UserResponse"
         # responses may fall through to errors
         default:
           description: Error
@@ -48,12 +48,19 @@ paths:
       description: Posts user to sign-up
       operationId: signin
       parameters:
-        - name: user
-          description: User properties
-          in: body
-          required: true
+        - in: body
+          name: user
+          description: The user to sign in
           schema:
-            $ref: "#/definitions/User"
+            type: object
+            required:
+              - username
+              - password
+            properties:
+              username:
+                type: string
+              password:
+                type: string
       responses:
         "200":
           description: Success
@@ -75,9 +82,8 @@ paths:
       security:
         -  JwtAuth: []
       parameters:
-        - name: name
-          in: query
-          description: The name of the person to retrive
+        - in: header
+          name: Authorization
           required: false
           type: string
       responses:
@@ -98,6 +104,10 @@ paths:
       security:
         - JwtAuth: []
       parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
         - name: user
           description: User properties
           in: body
@@ -125,6 +135,10 @@ paths:
       security:
         - JwtAuth: []
       parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
         - name: id
           in: path
           description: The id of the person to whom get
@@ -148,9 +162,13 @@ paths:
       security:
         - JwtAuth: []
       parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
         - name: id
           in: path
-          description: The name of the person to whom to update
+          description: The id of the person whom to update
           required: true
           type: string
         - name: user
@@ -177,9 +195,13 @@ paths:
       security:
         - JwtAuth: []
       parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
         - name: id
           in: path
-          description: The name of the person to whom to delete
+          description: The name of the person whom to delete
           required: true
           type: string
       responses:
@@ -191,6 +213,132 @@ paths:
         # responses may fall through to errors
         default:
           description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /movies:
+    x-swagger-router-controller: movie_controller
+    get:
+      description: Returns "Movies" to the caller
+      operationId: getmovies
+      security:
+        - JwtAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/MoviesResponse"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      description: Adds a movie to the database
+      operationId: insertmovie
+      security:
+        - JwtAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
+        - name: movie
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/Movie"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/MovieResponse"
+        default:
+          description: Failure
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /movies/{id}:
+    x-swagger-router-controller: movie_controller
+    get:
+      description: Returns a movie to the caller
+      operationId: getmovie
+      security:
+        - JwtAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
+        - name: id
+          in: path
+          description: The id of the movie to get
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/MoviesResponse"
+        default:
+          description: Failure
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    put:
+      description: Update movie by id
+      operationId: updatemovie
+      security:
+        - JwtAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
+        - name: id
+          in: path
+          description: The id of the movie to update
+          required: true
+          type: string
+        - in: body
+          description: The updated movie info
+          name: movie
+          required: true
+          schema:
+            $ref: "#/definitions/Movie"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/MovieResponse"
+        default:
+          description: Failure
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      description: Delete user by id
+      operationId: deletemovie
+      security:
+        - JwtAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/MovieResponse"
+        default:
+          description: Failure
           schema:
             $ref: "#/definitions/ErrorResponse"
 # complex objects have schema definitions
@@ -208,18 +356,23 @@ definitions:
         type: string
       password:
         type: string
-  UsersResponse:
-    required:
-      - name
-    properties:
-      name:
-        type: string
   UserResponse:
     required:
       - message
     properties:
       message:
         type: string
+  UsersResponse:
+    required:
+      - size
+      - users
+    properties:
+      size:
+        type: integer
+      users:
+        type: array
+        items:
+          $ref: "#/definitions/User"
   UserTokenResponse:
     required:
       - token
@@ -232,6 +385,53 @@ definitions:
     properties:
       message:
         type: string
+  CastMember:
+    type: object
+    required:
+      - actor
+      - character
+    properties:
+      actor:
+        type: string
+      character:
+        type: string
+  Movie:
+    type: object
+    required:
+      - title
+      - year
+      - genre
+      - cast
+    properties:
+      title:
+        type: string
+      year:
+        type: string
+      genre:
+        type: string
+        enum: ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Thriller', 'Western']
+      cast:
+        type: array
+        items:
+            $ref: "#/definitions/CastMember"
+        minItems: 3
+  MovieResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
+  MoviesResponse:
+    required:
+      - size
+      - movies
+    properties:
+      size:
+        type: integer
+      movies:
+        type: array
+        items:
+          $ref: "#/definitions/Movie"
 securityDefinitions:
   JwtAuth:
     type: apiKey

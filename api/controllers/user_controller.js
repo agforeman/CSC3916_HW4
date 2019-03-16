@@ -47,11 +47,24 @@ module.exports = {
 function getuser(req, res) {
   var id = req.swagger.params.id.value;
   User.findById(id, function(err, user) {
-    if (err) res.send(err);
-
-    var userJson = JSON.stringify(user);
-    // return that user
-    res.json(user);
+    if(err){
+        if (err.kind === "ObjectId") {
+            res.status(404).json({
+                success: false,
+                message: `No user with id: ${id} in the database!`
+            }).send();
+        } else {
+            res.send(err);
+        }
+    } else {
+        var userJson = JSON.stringify(user);
+        // return that user
+        res.status(200).json({
+            success: true,
+            size: 1,
+            users: user
+        });
+    }
   });
 }
 
@@ -61,7 +74,11 @@ function getusers(req, res) {
   User.find(function (err, users) {
     if (err) res.send(err);
     // return the users
-    res.json(users);
+    res.status(200).json({
+            success: true,
+            size: users.length,
+            users: users
+    });
   });
 }
 
@@ -73,19 +90,20 @@ function signin(req, res) {
 
     User.findOne({ username: userNew.username }).select('name username password').exec(function(err, user) {
         if (err) res.send(err);
-
-        user.comparePassword(userNew.password, function(isMatch){
-            if (isMatch) {
-                var userToken = {id: user._id, username: user.username};
-                var token = jwt.sign(userToken, process.env.SECRET_KEY);
-                res.json({success: true, token: 'JWT ' + token});
-            }
-            else {
-                res.status(401).send({success: false, msg: 'Authentication failed.'});
-            }
-        });
-
-
+        if(!user) {
+            res.status(401).send({success: false, message: 'User not found'})
+        } else{
+            user.comparePassword(userNew.password, function(isMatch){
+                if (isMatch) {
+                    var userToken = {id: user._id, username: user.username, name: user.name};
+                    var token = jwt.sign(userToken, process.env.SECRET_KEY);
+                    res.status(200).json({success: true, token: 'JWT ' + token});
+                }
+                else {
+                    res.status(401).send({success: false, message: 'Authentication failed.'});
+                }
+            });
+        }
     });
 }
 
@@ -99,21 +117,31 @@ function insertuser(req, res) {
     if (err) {
       // duplicate entry
       if (err.code == 11000)
-        return res.json({ success: false, message: 'A user with that username already exists. '});
+        return res.status(409).json({ success: false, message: 'A user with that username already exists. '}).send();
       else
         return res.send(err);
     }
 
-    res.json({ message: 'User created!' });
+    res.status(200).json({
+        success: true,
+        message: `${user.username} added!`
+    });
   });
 }
 
 function updateuser(req, res) {
     var id = req.swagger.params.id.value;
     User.findById(id, function(err, user) {
-      if (err) res.send(err);
-
-      if (user) {
+      if (err) {
+          if (err.kind === "ObjectId") {
+              res.status(404).json({
+                  success: false,
+                  message: `No user with id: ${id} in the database!`
+              }).send();
+          } else {
+              res.send(err);
+          }
+      } else if (user) {
           // update the users info only if its new
           if (req.swagger.params.user.value.name) user.name = req.swagger.params.user.value.name;
           if (req.swagger.params.user.value.username) user.username = req.swagger.params.user.value.username;
@@ -124,7 +152,10 @@ function updateuser(req, res) {
               if (err) res.send(err);
 
               // return a message
-              res.json({message: 'User updated!'});
+              res.status(200).json({
+                  success: true,
+                  message: 'User updated!'
+              });
           });
       }
     });
@@ -133,8 +164,20 @@ function updateuser(req, res) {
 function deleteuser(req, res) {
   var id = req.swagger.params.id.value;
   User.remove({ _id: id }, function(err, user) {
-    if (err) return res.send(err);
-
-    res.json({ message: 'Successfully deleted' });
+    if (err) {
+        if (err.kind === "ObjectId") {
+            res.status(404).json({
+                success: false,
+                message: `No user with id: ${id} in the database!`
+            }).send();
+        } else {
+            res.send(err);
+        }
+    } else {
+        res.status(200).json({
+            success: true,
+            message: 'Successfully deleted'
+        });
+    }
   });
 }
