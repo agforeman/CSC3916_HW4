@@ -12,8 +12,8 @@
  */
 var util = require('util');
 
-var Movie = require('../Controllers/Movies');
-var CastMember = require('../Controllers/CastMembers');
+var Movie = require('./Movies');
+var CastMember = require('./CastMembers');
 
 var jwt = require('jsonwebtoken');
 
