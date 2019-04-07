@@ -341,6 +341,98 @@ paths:
           description: Failure
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /movies/{id}?reviews=false:
+    x-swagger-router-controller: movie_controller
+    get:
+      description: Get specified movie info as well as all associated reviews
+      operationId: getmoviereviews
+      security:
+        - JwtAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
+        - in: path
+          name: id
+          description: The id of the movie to get
+          required: true
+          type: string
+        - in: query
+          name: reviews
+          required: true
+          default: false
+  /reviews:
+    x-swagger-router-controller: review_controller
+    get:
+      description: Returns "Reviews" to the caller
+      operationId: getreviews
+      security:
+        - JwtAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/ReviewsResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      description: Adds a review to the database
+      operationId: postreview
+      security:
+        - JwtAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
+        - in: body
+          name: review
+          required: true
+          schema:
+            $ref: "#/definitions/Review"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/MovieResponse"
+        default:
+          description: Failure
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /reviews/{id}:
+    x-swagger-router-controller: review_controller
+    get:
+      description: Get a review by its id
+      operationId: getreview
+      security:
+        - JwtAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: false
+          type: string
+        - in: path
+          name: id
+          description: The id of the review to get
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/ReviewsResponse"
+        default:
+          description: Failure
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 # complex objects have schema definitions
 definitions:
   User:
@@ -432,6 +524,53 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Movie"
+  Review:
+    type: object
+    required: 
+      - reviewer
+      - rating
+      - movieid
+      - review
+    properties:
+      reviewer:
+        type: string
+      rating:
+        type: integer
+        minimum: 0
+        maximum: 5
+      movieid:
+        type: string
+      review:
+        type: string
+  MovieReviews:
+    type: object
+    required:
+      - movie
+      - reviews
+    properties:
+      movie:
+        $ref: "#/definitions/Movie"
+      reviews:
+        type: array
+        items:
+          $ref: "#/definitions/Review"
+  ReviewResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
+  ReviewsResponse:
+    required:
+      - size
+      - movies
+    properties:
+      size:
+        type: integer
+      movies:
+        type: array
+        items:
+          $ref: "#/definitions/MovieReviews"
 securityDefinitions:
   JwtAuth:
     type: apiKey

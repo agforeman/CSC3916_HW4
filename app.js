@@ -1,5 +1,8 @@
 'use strict';
 
+const GA_TRACKING_ID = process.env.GA_KEY;
+
+
 var SwaggerExpress = require('swagger-express-mw');
 var app = require('express')();
 //var passport = require('passport');

@@ -1,8 +1,6 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var CastMember = require("./CastMembers");
-//var ValidationError = mongoose.Error.ValidationError;
-//var ValidatorError = mongoose.Error.ValidatorError;
 
 mongoose.Promise = global.Promise;
 

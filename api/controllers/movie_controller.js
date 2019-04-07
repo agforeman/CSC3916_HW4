@@ -34,7 +34,8 @@ module.exports = {
     getmovie: getmovie,
     insertmovie: insertmovie,
     updatemovie: updatemovie,
-    deletemovie: deletemovie
+    deletemovie: deletemovie,
+    getmoviereviews: getmoviereviews
 };
 
 /*
@@ -56,7 +57,7 @@ function getmovie(req, res) {
                 res.send(err);
             }
         } else {
-            var movieJson = JSON.stringify(movie);
+            //var movieJson = JSON.stringify(movie);
             res.status(200).json({
                 success: true,
                 size: 1,
@@ -151,6 +152,29 @@ function deletemovie(req, res) {
                 success: true,
                 message: 'Successfully deleted'
             })
+        }
+    });
+}
+
+function getmoviereviews(req, res) {
+    var id = req.swagger.params.id.value;
+    Movie.findById(id, function(err, movie) {
+        if(err) {
+            if(err.kind === "ObjectId") {
+                res.status(404).json({
+                    success: false,
+                    message: `No movie with id: ${id} in the database!`
+                }).send();
+            } else {
+                res.send(err);
+            }
+        } else {
+            //var movieJson = JSON.stringify(movie);
+            res.status(200).json({
+                success: true,
+                size: 1,
+                movies: movie
+            });
         }
     });
 }
