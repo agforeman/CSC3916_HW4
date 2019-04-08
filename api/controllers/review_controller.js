@@ -11,10 +11,33 @@
   It is a good idea to list the modules that your application depends on in the package.json in the project root
  */
 var util = require('util');
-
+var crypto = require('crypto');
 var Review = require('./Reviews');
-
+var Movie = require('./Movies');
 var jwt = require('jsonwebtoken');
+
+const GA_TRACKING_ID = process.env.GA_KEY;
+function trackDimension(category, action, label, value, dimension, metric) {
+    var options= {method: 'GET',
+        url: 'https://www.google-analytics.com/collect',
+        qs:
+            {
+                v:1,
+                tid: GA_TRACKING_ID,
+                cid: crypto.randomBytes(16).toString("hex"),
+                t: 'event',
+                ed: category,
+                ea: action,
+                el: label,
+                ev: value,
+                cd1: dimension,
+                cm1: metric
+            },
+        headers:
+            { 'Cache-Control': 'no-cache'}
+    };
+    return rp(options);
+}
 
 /*
  Once you 'require' a module you can reference the things that it exports.  These are defined in module.exports.
@@ -84,23 +107,33 @@ function postreview(req, res) {
     var review = new Review();
     //review.reviewer = req.swagger.params.review.value.reviewer;
     review.rating = req.swagger.params.review.value.rating;
-    review.movieid = req.swagger.params.review.value.movieid;
+    review.movie = req.swagger.params.review.value.movie;
     review.review = req.swagger.params.review.value.review;
     let token = parseJwt(req.swagger.params.Authorization.value);
     let decoded = jwt.verify(token, process.env.SECRET_KEY);
     review.reviewer = decoded.username;
 
-    review.save(function (err) {
-        if(err) {
-            if(err.code === 11000) {
-                return res.status(409).json({success: false, message: 'A review with that id already exists'}).send()
-            } else {
-                return res.send(err);
-            }
+    Movie.find({'title': review.movie}, function(err, movie){
+        if(movie.length === 0){
+          res.status(404).json({
+              success: false,
+              message: `No movie with title: ${review.movie} in the database!`
+          }).send();
+        } else if(err) {
+            res.status(400).send(err);
+        } else {
+            review.save(function (err){
+                if(err) {
+                    if(err) {
+                        return res.status(400).send(err);
+                    }
+                }
+                res.status(200).json({
+                    success: true,
+                    message: `${review.review} added for movie: ${review.movie}!`
+                });
+                trackDimension(movie.genre,"POST /review","API Request for Movie Review",1,1,1);
+            });
         }
-        res.status(200).json({
-            success: true,
-            message: `${review.review} added for movie: ${review.movieid}!`
-        });
     });
 }

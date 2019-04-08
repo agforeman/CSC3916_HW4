@@ -8,14 +8,15 @@
   "license": "",
   "main": "app.js",
   "dependencies": {
-    "swagger-express-mw": "^0.7.0",
     "bcrypt-nodejs": "0.0.3",
-    "mongoose": "^5.0.9",
+    "crypto": "^1.0.1",
     "express": "^4.16.4",
     "jsonwebtoken": "^8.4.0",
+    "mongoose": "^5.0.9",
     "passport": "^0.4.0",
     "passport-http": "^0.3.0",
-    "passport-jwt": "^4.0.0"
+    "passport-jwt": "^4.0.0",
+    "swagger-express-mw": "^0.7.0"
   },
   "devDependencies": {
     "dotenv": "^6.2.0",

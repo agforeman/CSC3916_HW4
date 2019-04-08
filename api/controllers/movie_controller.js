@@ -14,7 +14,7 @@ var util = require('util');
 
 var Movie = require('./Movies');
 var CastMember = require('./CastMembers');
-
+var ObjectId = require('mongodb').ObjectId;
 var jwt = require('jsonwebtoken');
 
 /*
@@ -46,25 +46,29 @@ module.exports = {
  */
 function getmovie(req, res) {
     var id = req.swagger.params.id.value;
-    Movie.findById(id, function(err, movie) {
-        if(err) {
-            if(err.kind === "ObjectId") {
-                res.status(404).json({
-                    success: false,
-                    message: `No movie with id: ${id} in the database!`
-                }).send();
+    if(req.swagger.params.reviews.value === true) {
+        getmoviereviews(req, res);
+    } else {
+        Movie.findById(id, function(err, movie) {
+            if(err) {
+                if(err.kind === "ObjectId") {
+                    res.status(404).json({
+                        success: false,
+                        message: `No movie with id: ${id} in the database!`
+                    }).send();
+                } else {
+                    res.send(err);
+                }
             } else {
-                res.send(err);
+                //var movieJson = JSON.stringify(movie);
+                res.status(200).json({
+                    success: true,
+                    size: 1,
+                    movies: movie
+                });
             }
-        } else {
-            //var movieJson = JSON.stringify(movie);
-            res.status(200).json({
-                success: true,
-                size: 1,
-                movies: movie
-            });
-        }
-    });
+        });
+    }
 }
 
 function getmovies(req, res) {
@@ -157,24 +161,39 @@ function deletemovie(req, res) {
 }
 
 function getmoviereviews(req, res) {
-    var id = req.swagger.params.id.value;
-    Movie.findById(id, function(err, movie) {
-        if(err) {
-            if(err.kind === "ObjectId") {
-                res.status(404).json({
-                    success: false,
-                    message: `No movie with id: ${id} in the database!`
-                }).send();
-            } else {
-                res.send(err);
+    let id = req.swagger.params.id.value;
+
+    Movie.aggregate([
+        {
+            '$lookup': {
+                'from': 'reviews',
+                'localField': 'title',
+                'foreignField': 'movie',
+                'as': 'reviews'
             }
-        } else {
-            //var movieJson = JSON.stringify(movie);
-            res.status(200).json({
-                success: true,
-                size: 1,
-                movies: movie
-            });
+        }, {
+            '$match': {
+                '_id': ObjectId(id)
+            }
         }
+    ], function(err, movies){
+       if(err){
+           res.send(err)
+       } else {
+           res.status(200).json({
+               'size': 1,
+               'movies': {
+                   'title': movies[0].title,
+                   'year': movies[0].year,
+                   'genre': movies[0].genre,
+                   'cast': movies[0].cast
+               },
+               'reviews': {
+                   'size': movies[0].reviews.length,
+                   'reviews': movies[0].reviews
+               }
+           });
+       }
     });
+
 }

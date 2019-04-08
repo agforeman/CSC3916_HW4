@@ -279,6 +279,11 @@ paths:
           description: The id of the movie to get
           required: true
           type: string
+        - in: query
+          name: reviews
+          type: boolean
+          required: false
+          default: false
       responses:
         "200":
           description: Success
@@ -341,27 +346,6 @@ paths:
           description: Failure
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /movies/{id}?reviews=false:
-    x-swagger-router-controller: movie_controller
-    get:
-      description: Get specified movie info as well as all associated reviews
-      operationId: getmoviereviews
-      security:
-        - JwtAuth: []
-      parameters:
-        - in: header
-          name: Authorization
-          required: false
-          type: string
-        - in: path
-          name: id
-          description: The id of the movie to get
-          required: true
-          type: string
-        - in: query
-          name: reviews
-          required: true
-          default: false
   /reviews:
     x-swagger-router-controller: review_controller
     get:
@@ -402,7 +386,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: "#/definitions/MovieResponse"
+            $ref: "#/definitions/ReviewResponse"
         default:
           description: Failure
           schema:
@@ -524,12 +508,13 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Movie"
+      reviews:
+        $ref: "#/definitions/ReviewsResponse"
   Review:
     type: object
     required: 
-      - reviewer
       - rating
-      - movieid
+      - movie
       - review
     properties:
       reviewer:
@@ -538,22 +523,10 @@ definitions:
         type: integer
         minimum: 0
         maximum: 5
-      movieid:
+      movie:
         type: string
       review:
         type: string
-  MovieReviews:
-    type: object
-    required:
-      - movie
-      - reviews
-    properties:
-      movie:
-        $ref: "#/definitions/Movie"
-      reviews:
-        type: array
-        items:
-          $ref: "#/definitions/Review"
   ReviewResponse:
     required:
       - message
@@ -563,14 +536,14 @@ definitions:
   ReviewsResponse:
     required:
       - size
-      - movies
+      - reviews
     properties:
       size:
         type: integer
-      movies:
+      reviews:
         type: array
         items:
-          $ref: "#/definitions/MovieReviews"
+          $ref: "#/definitions/Review"
 securityDefinitions:
   JwtAuth:
     type: apiKey
