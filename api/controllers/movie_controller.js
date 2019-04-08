@@ -181,6 +181,7 @@ function getmoviereviews(req, res) {
            res.send(err)
        } else {
            res.status(200).json({
+               'success': true,
                'size': 1,
                'movies': {
                    'title': movies[0].title,
