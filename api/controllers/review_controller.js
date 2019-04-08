@@ -16,9 +16,10 @@ var got = require('got');
 var Review = require('./Reviews');
 var Movie = require('./Movies');
 var jwt = require('jsonwebtoken');
+var rp = require('request-promise');
 
 const GA_TRACKING_ID = process.env.GA_KEY;
-/*
+
 function trackDimension(category, action, label, value, dimension, metric) {
     var options= {
         method: 'GET',
@@ -41,22 +42,7 @@ function trackDimension(category, action, label, value, dimension, metric) {
     };
     return rp(options);
 }
-*/
-function trackDimension(category, action, label, value, dimension, metric) {
-    const data = {
-        v:1,
-        tid: GA_TRACKING_ID,
-        cid: crypto.randomBytes(16).toString("hex"),
-        t: 'event',
-        ec: category,
-        ea: action,
-        el: label,
-        ev: value,
-        cd1: dimension,
-        cm1: metric
-    };
-    return got.post('http://www.google-analytics.com/collect', {form: data});
-}
+
 
 /*
  Once you 'require' a module you can reference the things that it exports.  These are defined in module.exports.
