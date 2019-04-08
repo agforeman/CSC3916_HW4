@@ -12,13 +12,16 @@
  */
 var util = require('util');
 var crypto = require('crypto');
+var got = require('got');
 var Review = require('./Reviews');
 var Movie = require('./Movies');
 var jwt = require('jsonwebtoken');
 
 const GA_TRACKING_ID = process.env.GA_KEY;
+/*
 function trackDimension(category, action, label, value, dimension, metric) {
-    var options= {method: 'GET',
+    var options= {
+        method: 'GET',
         url: 'https://www.google-analytics.com/collect',
         qs:
             {
@@ -37,6 +40,22 @@ function trackDimension(category, action, label, value, dimension, metric) {
             { 'Cache-Control': 'no-cache'}
     };
     return rp(options);
+}
+*/
+function trackDimension(category, action, label, value, dimension, metric) {
+    const data = {
+        v:1,
+        tid: GA_TRACKING_ID,
+        cid: crypto.randomBytes(16).toString("hex"),
+        t: 'event',
+        ec: category,
+        ea: action,
+        el: label,
+        ev: value,
+        cd1: dimension,
+        cm1: metric
+    };
+    return got.post('http://www.google-analytics.com/collect', {form: data});
 }
 
 /*
@@ -128,11 +147,12 @@ function postreview(req, res) {
                         return res.status(400).send(err);
                     }
                 }
+                trackDimension(movie[0].genre,"POST /review","API Request for Movie Review",1,"Movie Name","Rating");
                 res.status(200).json({
                     success: true,
                     message: `${review.review} added for movie: ${review.movie}!`
                 });
-                //trackDimension(movie.genre,"POST /review","API Request for Movie Review",1,1,1);
+
             });
         }
     });
