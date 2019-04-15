@@ -9,6 +9,7 @@
   "main": "app.js",
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",
+    "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "express": "^4.16.4",
     "got": "^9.6.0",

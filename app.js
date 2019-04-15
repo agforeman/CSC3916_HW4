@@ -25,6 +25,8 @@ function trackDimension(category, action, label, value, dimension, metric) {
 
 var SwaggerExpress = require('swagger-express-mw');
 var app = require('express')();
+var cors = require('cors');
+app.use(cors());
 //var passport = require('passport');
 module.exports = app; // for testing
 
