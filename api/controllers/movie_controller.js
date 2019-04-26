@@ -72,15 +72,19 @@ function getmovie(req, res) {
 }
 
 function getmovies(req, res) {
-    Movie.find(function (err, movies) {
-       if (err) res.send(err);
-
-       res.status(200).json({
-           success: true,
-           size: movies.length,
-           movies: movies
-       })
-    });
+    if(req.swagger.params.reviews.value === true) {
+        getmoviereviews(req,res);
+    } else {
+        Movie.find(function (err, movies) {
+            if (err) res.send(err);
+            // IF NOT QUERY REVIEWS = TRUE
+            res.status(200).json({
+                success: true,
+                size: movies.length,
+                movies: movies
+            })
+        });
+    }
 }
 
 function insertmovie(req, res) {
@@ -161,10 +165,25 @@ function deletemovie(req, res) {
 }
 
 function getmoviereviews(req, res) {
-    let id = req.swagger.params.id.value;
-
+    // Initialize id to null
+    let id = null;
+    // Check if id was passed
+    if(req.swagger.params.id !== undefined){
+        // if so set it
+        id = req.swagger.params.id.value;
+    }
+    // Create an empty match pipeline. This will be used to match all movies if no id is specified
+    let match = {};
+    // If an id was passed create the match pipeline
+    if(id !== null){
+        match = {'_id': ObjectId(id)}
+    }
+    //  ------- Now do some Tom foolery ------
+    // V                                      V
     Movie.aggregate([
         {
+            '$match': match
+        }, {
             '$lookup': {
                 'from': 'reviews',
                 'localField': 'title',
@@ -172,27 +191,49 @@ function getmoviereviews(req, res) {
                 'as': 'reviews'
             }
         }, {
-            '$match': {
-                '_id': ObjectId(id)
+            '$project': {
+                'title': 1,
+                'year': 1,
+                'genre': 1,
+                'cast': {
+                    'actor': 1,
+                    'character': 1
+                },
+                'reviews': {
+                    'rating': 1,
+                    'reviewer': 1,
+                    'review': 1
+                }
+            }
+        }, {
+            '$addFields': {
+                'average_rating': {
+                    '$avg': '$reviews.rating'
+                }
             }
         }
     ], function(err, movies){
        if(err){
            res.send(err)
        } else {
+           let movies_list = [];
+           for (let item in movies) {
+
+               let movie = {
+                   'title': movies[item].title,
+                   'year': movies[item].year,
+                   'genre': movies[item].genre,
+                   'average_rating': movies[item].average_rating,
+                   'cast': movies[item].cast,
+                   'reviews': movies[item].reviews
+               };
+               movies_list.push(movie)
+           }
+           let length = movies_list.length;
            res.status(200).json({
                'success': true,
-               'size': 1,
-               'movies': {
-                   'title': movies[0].title,
-                   'year': movies[0].year,
-                   'genre': movies[0].genre,
-                   'cast': movies[0].cast
-               },
-               'reviews': {
-                   'size': movies[0].reviews.length,
-                   'reviews': movies[0].reviews
-               }
+               'size': length,
+               'movies': movies_list
            });
        }
     });

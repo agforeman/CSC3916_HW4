@@ -227,6 +227,11 @@ paths:
           name: Authorization
           required: false
           type: string
+        - in: query
+          name: reviews
+          type: boolean
+          required: false
+          default: false
       responses:
         "200":
           description: Success
