@@ -192,7 +192,7 @@ function getmoviereviews(req, res) {
             }
         }, {
             '$project': {
-                '_id': 1,
+                'id': 1,
                 'title': 1,
                 'year': 1,
                 'genre': 1,
@@ -221,6 +221,7 @@ function getmoviereviews(req, res) {
            for (let item in movies) {
 
                let movie = {
+                   '_id': ObjectId(movies[item]._id),
                    'title': movies[item].title,
                    'year': movies[item].year,
                    'genre': movies[item].genre,
