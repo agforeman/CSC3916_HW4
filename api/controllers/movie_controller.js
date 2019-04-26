@@ -196,6 +196,7 @@ function getmoviereviews(req, res) {
                 'title': 1,
                 'year': 1,
                 'genre': 1,
+                'imageURL': 1,
                 'cast': {
                     'actor': 1,
                     'character': 1
@@ -219,12 +220,12 @@ function getmoviereviews(req, res) {
        } else {
            let movies_list = [];
            for (let item in movies) {
-
                let movie = {
                    '_id': ObjectId(movies[item]._id),
                    'title': movies[item].title,
                    'year': movies[item].year,
                    'genre': movies[item].genre,
+                   'imageUrl': movies[item].imageURL,
                    'average_rating': movies[item].average_rating,
                    'cast': movies[item].cast,
                    'reviews': movies[item].reviews
