@@ -192,6 +192,7 @@ function getmoviereviews(req, res) {
             }
         }, {
             '$project': {
+                '_id': 1,
                 'title': 1,
                 'year': 1,
                 'genre': 1,
