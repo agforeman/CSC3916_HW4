@@ -213,6 +213,10 @@ function getmoviereviews(req, res) {
                     '$avg': '$reviews.rating'
                 }
             }
+        }, {
+            '$sort': {
+                'average_rating': -1
+            }
         }
     ], function(err, movies){
        if(err){
